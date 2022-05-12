@@ -9,6 +9,11 @@ from sklearn.cluster import KMeans
 from scipy import stats
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.mixture import GaussianMixture
+from sklearn.cluster import DBSCAN
+from sklearn.manifold import TSNE
 
 df = pd.read_csv("SpotifyFeatures.csv")
 df.isnull().sum().sum()
@@ -172,14 +177,14 @@ songs['Cluster'] = kmeans.fit_predict(DF)
 
 #**part 2.3 - EM**
 
-from sklearn.mixture import GaussianMixture
+
 model = GaussianMixture(n_components=39, init_params='random')
 model.fit(DF)
 songs['Cluster']=model.predict(DF)
 
 #**part 2.4 - DBSCAN**
 
-from sklearn.cluster import DBSCAN
+
 model_DB= DBSCAN(eps=3, min_samples=100)
 model_DB.fit(DF[:100000])
 #songs[0:10000]['cluster']=model_DB.labels_
@@ -188,7 +193,7 @@ model_DB.fit(DF[:100000])
 
 # Visualizing the Clusters with t-SNE
 # Visualizing the Clusters with t-SNE
-from sklearn.manifold import TSNE
+
 
 def visual(X):
 
@@ -214,8 +219,7 @@ def visual(X):
 #k-mean
 
 df_copy=pd.read_csv("SpotifyFeatures.csv")
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
+
 genre_data = df_copy.sample(n=4000)
 cluster_pipeline = Pipeline([('scaler', StandardScaler()), ('kmeans', KMeans(n_clusters=17))])
 X = genre_data.select_dtypes(np.number)
@@ -226,8 +230,6 @@ visual(X)
  #GaussianMixture
  
 df_copy=pd.read_csv("SpotifyFeatures.csv")
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
 genre_data = df_copy.sample(n=4000)
 cluster_pipeline = Pipeline([('scaler', StandardScaler()), ('GaussianMixture', GaussianMixture(n_components=39, init_params='random'))])
 X = genre_data.select_dtypes(np.number)
@@ -238,8 +240,6 @@ visual(X)
 # 'DBSCAN'
 
 df_copy=pd.read_csv("SpotifyFeatures.csv")
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
 genre_data = df_copy.sample(n=4000)
 cluster_pipeline = Pipeline([('scaler', StandardScaler()), ('DBSCAN', DBSCAN(eps=3, min_samples=100))])
 X = genre_data.select_dtypes(np.number)
