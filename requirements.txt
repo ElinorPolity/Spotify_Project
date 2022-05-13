@@ -14,3 +14,4 @@ from sklearn.pipeline import Pipeline
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import DBSCAN
 from sklearn.manifold import TSNE
+from sklearn.metrics import silhouette_score
