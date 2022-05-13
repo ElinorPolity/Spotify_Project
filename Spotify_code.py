@@ -14,6 +14,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import DBSCAN
 from sklearn.manifold import TSNE
+from sklearn.metrics import silhouette_score
 
 df = pd.read_csv("SpotifyFeatures.csv")
 df.isnull().sum().sum()
@@ -154,6 +155,10 @@ songs = songs.drop_duplicates(['track_name', 'artist_name']).reset_index(drop = 
 
 songs.head()
 
+#sampeling the data for the models
+K_song=songs[songs["track_name"]=='All Of The Lights']
+songs=songs.sample(70000)
+songs=songs.append(K_song)
 #**PART 2.2 KMEAN cluster**
 #Exploratory Data Analysis - for choosing K
 
@@ -172,26 +177,28 @@ plt.show()
 #K-means with Cosine Distance model
 
 DF = pd.DataFrame(songs.drop(['track_name', 'artist_name'], axis = 1))
-kmeans = KMeans(n_clusters=17)
-songs['Cluster'] = kmeans.fit_predict(DF)
+km = KMeans(n_clusters=17)
+songs['Cluster'] = km.fit_predict(DF)
+silhouette_score(DF,songs['Cluster'], metric='euclidean')
 
 #**part 2.3 - EM**
 
-
 model = GaussianMixture(n_components=39, init_params='random')
 model.fit(DF)
-songs['Cluster']=model.predict(DF)
+songs['Cluster2']=model.predict(DF)
+silhouette_score(DF,songs['Cluster2'], metric='euclidean')
 
 #**part 2.4 - DBSCAN**
 
 
 model_DB= DBSCAN(eps=3, min_samples=100)
-model_DB.fit(DF[:100000])
-#songs[0:10000]['cluster']=model_DB.labels_
+model_DB.fit(DF)
+songs['Cluster3']=model_DB.labels_
+silhouette_score(DF,model_DB.labels_, metric='euclidean')
+
 
 **PART 3 - try to visualize **
 
-# Visualizing the Clusters with t-SNE
 # Visualizing the Clusters with t-SNE
 
 
@@ -219,7 +226,6 @@ def visual(X):
 #k-mean
 
 df_copy=pd.read_csv("SpotifyFeatures.csv")
-
 genre_data = df_copy.sample(n=4000)
 cluster_pipeline = Pipeline([('scaler', StandardScaler()), ('kmeans', KMeans(n_clusters=17))])
 X = genre_data.select_dtypes(np.number)
@@ -241,8 +247,56 @@ visual(X)
 
 df_copy=pd.read_csv("SpotifyFeatures.csv")
 genre_data = df_copy.sample(n=4000)
-cluster_pipeline = Pipeline([('scaler', StandardScaler()), ('DBSCAN', DBSCAN(eps=3, min_samples=100))])
 X = genre_data.select_dtypes(np.number)
-genre_data['cluster'] =cluster_pipeline.fit(X)
-#genre_data['cluster'] = cluster_pipeline.predict(X)
-visual(X)
+scaler = StandardScaler()
+X=scaler.fit_transform(X)
+cluster_DB=DBSCAN(eps=3, min_samples=100)
+cluster_DB.fit(X)
+genre_data['cluster'] =cluster_DB.labels_
+visual(X,genre_data)
+
+# RECOMENDATION ENGINE
+def find_song_database(name, artist, songs):
+    result = songs[(songs.artist_name == str(artist)) & (songs.track_name == str(name))]
+    if len(result) == 0:
+        return None
+    return result.drop(['track_name', 'artist_name', 'Cluster'], axis = 1)
+
+def find_similar(name, artist, songs, top_n = 5):
+    database = songs[songs.popularity > 0.5].reset_index(drop = True)
+    indx_names = database[['track_name', 'artist_name', 'Cluster']]
+    songs_train = database.drop(['track_name', 'artist_name', 'Cluster'], axis = 1)
+
+    song = find_song_database(str(name), str(artist), database)
+    
+    if type(song) != type(None):
+        indx_song = song.index
+
+        cos_dists = cosine_similarity(songs_train, songs_train)
+        indx_names.loc[:,['result']] = cos_dists[indx_song[0]]
+
+        indx_names = indx_names.sort_values(by = ['result'], ascending = False)
+
+        return indx_names[1:top_n].reset_index(drop = True)
+    
+    else:
+        print("Song not found")
+        return None
+        
+def playlist_song(name, artist, songs, n_songs = 10):
+    list_songs = find_similar(str(name), str(artist), songs, n_songs)
+    
+    if type(list_songs) != type(None):
+    
+        print('Playlist based on "' + str(name) + '" by ' + str(artist))
+        print()
+
+        for i in np.arange(0,len(list_songs)):
+            track_name = list_songs.track_name[i]
+            artist_name = list_songs.artist_name[i]
+
+            print(str(track_name) + ' - ' + str(artist_name))
+            
+    return None
+
+print(playlist_song('All Of The Lights', 'Kanye West', songs, 15))
