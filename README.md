@@ -6,7 +6,7 @@ The database used contains more than 200,000 samples, which significantly increa
 In the code you can find 4 main parts:
 
 1. In-depth investigation of the data in order to understand features in more depth
-Phase of implementation of the three selected models: Kmeans,GM,DBSCAN -  and their validation using a silhouette score.
+2. Implementation of the three selected models: Kmeans,GM,DBSCAN -  and their validation using a silhouette score.
 3. Visualization of the selected models. For the purpose of visualization, 4000 samples were randomly selected.
 4. Playlist recommendation engine based on the song entered by the user
 ה
